@@ -51,6 +51,7 @@ type VolumeConfig struct {
 	Zone                        string                 `json:"zone,omitempty"`
 	ImportOriginalName          string                 `json:"importOriginalName,omitempty"`
 	ImportBackendUUID           string                 `json:"importBackendUUID,omitempty"`
+	ImportBackendName           string                 `json:"importBackendName,omitempty"`
 	ImportNotManaged            bool                   `json:"importNotManaged,omitempty"`
 	MountOptions                string                 `json:"mountOptions,omitempty"`
 	RequisiteTopologies         []map[string]string    `json:"requisiteTopologies,omitempty"`
