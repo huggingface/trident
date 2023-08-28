@@ -2461,12 +2461,7 @@ func (o *TridentOrchestrator) GetVolumeByInternalName(
 	return "", errors.NotFoundError("volume %s not found", volumeInternal)
 }
 
-func (o *TridentOrchestrator) validateImportVolume(ctx context.Context, volumeConfig *storage.VolumeConfig) error {
-	backend, err := o.getBackendByBackendUUID(volumeConfig.ImportBackendUUID)
-	if err != nil {
-		return fmt.Errorf("could not find backend; %v", err)
-	}
-
+func (o *TridentOrchestrator) validateImportVolume(ctx context.Context, volumeConfig *storage.VolumeConfig, backend storage.Backend) error {
 	originalName := volumeConfig.ImportOriginalName
 	backendUUID := volumeConfig.ImportBackendUUID
 
@@ -2530,7 +2525,7 @@ func (o *TridentOrchestrator) ImportVolume(
 	if o.bootstrapError != nil {
 		return nil, o.bootstrapError
 	}
-	if volumeConfig.ImportBackendUUID == "" {
+	if volumeConfig.ImportBackendUUID == "" && volumeConfig.ImportBackendName == "" {
 		return nil, fmt.Errorf("no backend specified for import")
 	}
 	if volumeConfig.ImportOriginalName == "" {
@@ -2546,14 +2541,17 @@ func (o *TridentOrchestrator) ImportVolume(
 	Logc(ctx).WithFields(LogFields{
 		"volumeConfig": volumeConfig,
 		"backendUUID":  volumeConfig.ImportBackendUUID,
+		"backendName":  volumeConfig.ImportBackendName,
 	}).Debug("Orchestrator#ImportVolume")
 
-	backend, ok := o.backends[volumeConfig.ImportBackendUUID]
-	if !ok {
-		return nil, errors.NotFoundError("backend %s not found", volumeConfig.ImportBackendUUID)
+	var backend storage.Backend
+	if volumeConfig.ImportBackendUUID != "" {
+		backend, err = o.getBackendByBackendUUID(volumeConfig.ImportBackendUUID)
 	}
-
-	err = o.validateImportVolume(ctx, volumeConfig)
+	if volumeConfig.ImportBackendName != "" {
+		backend, err = o.getBackendByBackendName(volumeConfig.ImportBackendName)
+	}
+	err = o.validateImportVolume(ctx, volumeConfig, backend)
 	if err != nil {
 		return nil, err
 	}

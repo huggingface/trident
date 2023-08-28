@@ -49,6 +49,7 @@ const (
 	AnnNotManaged           = annPrefix + "/notManaged"
 	AnnImportOriginalName   = annPrefix + "/importOriginalName"
 	AnnImportBackendUUID    = annPrefix + "/importBackendUUID"
+	AnnImportBackendName    = annPrefix + "/importBackendName"
 	AnnInternalSnapshotName = annPrefix + "/internalSnapshotName"
 	AnnMirrorRelationship   = annPrefix + "/mirrorRelationship"
 	AnnVolumeShareFromPVC   = annPrefix + "/shareFromPVC"
