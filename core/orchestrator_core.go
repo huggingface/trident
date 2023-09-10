@@ -2469,7 +2469,7 @@ func (o *TridentOrchestrator) LegacyImportVolume(
 
 	// Recover function in case or error
 	defer func() {
-		err = o.importVolumeCleanup(ctx, err, volumeConfig, volTxn)
+		err = o.importVolumeCleanup(ctx, err, volumeConfig, volTxn, backend)
 	}()
 
 	volume, err := backend.ImportVolume(ctx, volumeConfig)
@@ -2570,7 +2570,7 @@ func (o *TridentOrchestrator) ImportVolume(
 
 	// Recover function in case or error
 	defer func() {
-		err = o.importVolumeCleanup(ctx, err, volumeConfig, volTxn)
+		err = o.importVolumeCleanup(ctx, err, volumeConfig, volTxn, backend)
 	}()
 
 	volume, err := backend.ImportVolume(ctx, volumeConfig)
@@ -2808,14 +2808,13 @@ func (o *TridentOrchestrator) addVolumeRetryCleanup(
 }
 
 func (o *TridentOrchestrator) importVolumeCleanup(
-	ctx context.Context, err error, volumeConfig *storage.VolumeConfig, volTxn *storage.VolumeTransaction,
-) error {
-	var cleanupErr, txErr error
+	ctx context.Context,
+	err error,
+	volumeConfig *storage.VolumeConfig,
+	volTxn *storage.VolumeTransaction,
+	backend storage.Backend) error {
 
-	backend, ok := o.backends[volumeConfig.ImportBackendUUID]
-	if !ok {
-		return utils.NotFoundError(fmt.Sprintf("backend %s not found", volumeConfig.ImportBackendUUID))
-	}
+	var cleanupErr, txErr error
 
 	if err != nil {
 		// We failed somewhere. Most likely we failed to rename the volume or retrieve its size.
