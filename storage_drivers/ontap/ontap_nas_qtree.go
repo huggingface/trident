@@ -471,9 +471,49 @@ func (d *NASQtreeStorageDriver) CreateClone(
 }
 
 func (d *NASQtreeStorageDriver) Import(
-	context.Context, *storage.VolumeConfig, string,
+	ctx context.Context, volConfig *storage.VolumeConfig, name string,
 ) error {
-	return errors.New("import is not implemented")
+	fields := LogFields{
+		"Method": "Import",
+		"Type":   "NASQtreeStorageDriver",
+		"name":   name,
+	}
+	Logd(ctx, d.Name(), d.Config.DebugTraceFlags["method"]).WithFields(fields).Trace(">>>> Import")
+	defer Logd(ctx, d.Name(), d.Config.DebugTraceFlags["method"]).WithFields(fields).Trace("<<<< Import")
+
+	// Ensure any Flexvol we create won't be pruned before we place a qtree on it
+	utils.Lock(ctx, "import", d.sharedLockID)
+	defer utils.Unlock(ctx, "import", d.sharedLockID)
+
+	// Generic user-facing message
+	createError := errors.New("volume import failed")
+
+	volumePattern, name, err := d.SetVolumePatternToFindQtree(ctx, volConfig.InternalID, volConfig.InternalName,
+		d.FlexvolNamePrefix())
+	if err != nil {
+		return err
+	}
+	// Ensure volume doesn't already exist
+	exists, existsInFlexvol, err := d.API.QtreeExists(ctx, name, volumePattern)
+	if err != nil {
+		Logc(ctx).Errorf("Error checking for existing volume: %v.", err)
+		return createError
+	}
+	if !exists {
+		Logc(ctx).WithFields(LogFields{"qtree": name, "flexvol": existsInFlexvol}).Debug("Qtree doesn't exists.")
+		return createError
+	}
+
+	qtree, err := d.API.QtreeGetByName(ctx, name, "")
+	if err != nil {
+		Logc(ctx).Errorf("Error getting qtree: %v.", err)
+		return createError
+	}
+
+	volConfig.UnixPermissions = qtree.UnixPermissions
+	volConfig.SecurityStyle = qtree.SecurityStyle
+
+	return nil
 }
 
 func (d *NASQtreeStorageDriver) Rename(context.Context, string, string) error {

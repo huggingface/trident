@@ -488,6 +488,7 @@ func getVolumeConfig(
 		AccessMode:          accessMode,
 		ImportOriginalName:  getAnnotation(annotations, AnnImportOriginalName),
 		ImportBackendUUID:   getAnnotation(annotations, AnnImportBackendUUID),
+		ImportBackendName:   getAnnotation(annotations, AnnImportBackendName),
 		ImportNotManaged:    notManaged,
 		MountOptions:        strings.Join(storageClass.MountOptions, ","),
 		RequisiteTopologies: requisiteTopology,
